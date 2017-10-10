@@ -46,7 +46,7 @@ def _success(model_obj, msg=None):
 def _retrieve_services(account):
     log.info("Fetching list of PagerDuty services for %s..." % account.fqdn())
     try:
-        all_services = requests.retrieve_services(account)
+        api_services = requests.retrieve_services(account)
 
     except requests.InvalidTokenException as e:
         log.warn("Token rejected")
@@ -58,8 +58,7 @@ def _retrieve_services(account):
         log.warn(e.message)
         raise
 
-    api_services = [service for service in all_services if service.type == Service.Type.GenericAPI]
-    log.info("Found %d services for %s" % (len(api_services), account.fqdn()))
+    log.info("Found %d services with integration of Events API V2  for %s" % (len(api_services), account.fqdn()))
     return api_services
 
 class AccountRouter(DirectRouter):
@@ -125,7 +124,7 @@ class ServicesRouter(DirectRouter):
             return DirectResponse.fail(msg=msg, inline_message=pdue.message)
 
         if not api_services:
-            msg = ("No generic event services were found for %s.pagerduty.com." % account.subdomain) if wants_messages else None
+            msg = ("No services with events integration v2 were found for %s.pagerduty.com." % account.subdomain) if wants_messages else None
             return DirectResponse.fail(msg=msg)
         
         return _success(api_services)
