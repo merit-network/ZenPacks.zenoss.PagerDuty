@@ -61,7 +61,7 @@ else:
     MultiLineText = schema.TextLine
 
 def _serialize(details):
-    return [{u'key':a, u'value':b} for a,b in zip(details.keys(), details.values())] 
+    return [{u'key':a, u'value':b} for a,b in zip(details.keys(), details.values())]
 
 class IPagerDutyEventsAPIActionContentInfo(IInfo):
     """
@@ -84,25 +84,17 @@ class IPagerDutyEventsAPIActionContentInfo(IInfo):
         default     = u'${evt/summary}'
     )
 
-    description = SingleLineText(
-        title       = _t(u'Description'),
-        description = _t(u'The description for the PagerDuty event.'),
-        default     = u'${evt/device}: ${evt/summary}',
-    )
-
-    incident_key = SingleLineText(
-        title       = _t(u'Incident Key'),
-        description = _t(u'The incident key for the PagerDuty event.'),
-        default     = u'${evt/evid}',
+    source = SingleLineText(
+        title       = _t(u'Source'),
+        description = _t(u'The unique location of the affected system, preferably a hostname or FQDN'),
+        default     = u'${urls/eventUrl}',
     )
 
     details = schema.List(
         title       = _t(u'Details'),
-        description = _t(u'The incident key for the PagerDuty event.'),
+        description = _t    (u'Custom details to be sent.'),
         default     = [json.dumps(_serialize({
                     u'device':u'${evt/device}',
-                    u'ipAddress':u'${evt/component}',
-                    u'severity':u'${evt/severity}',
                     u'message':u'${evt/message}',
                     u'eventID':u'${evt/evid}',
                     }))],
