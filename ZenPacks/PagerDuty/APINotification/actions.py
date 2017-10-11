@@ -174,21 +174,25 @@ class PagerDutyEventsAPIAction(IActionBase):
         response = f.read()
         f.close()
 
-    def _processTalExpressions(self, data, environ):
-        if type(data) is str or type(data) is unicode:
-            if '${' not in data:
-                return data
+    def _process_tal_exprresion(self, value, environ):
+        if type(value) is str or type(value) is unicode:
+            if '${' not in value:
+                return value
             try:
-                return processTalSource(data, **environ)
+                return processTalSource(value, **environ)
             except Exception:
                 raise ActionExecutionException(
-                    'Unable to perform TALES evaluation on "%s" -- is there an unescaped $?' % data)
-        elif type(data) is list:
-            return [self._processTalExpressions(e, environ) for e in data]
-        elif type(data) is dict:
-            return dict([(k, self._processTalExpressions(v, environ)) for (k, v) in data.iteritems()])
+                    'Unable to perform TALES evaluation on "%s" -- is there an unescaped $?' % value)
         else:
-            return data
+            return value
+
+    def _processTalExpressions(self, data, environ):
+        for payload_key in data['payload']:
+            if not payload_key.startswith('custom_details'):
+                data['payload'][payload_key] = self._process_tal_exprresion(data['payload'][payload_key], environ)
+        for detail_key in data['payload']['custom_details']:
+            data['payload']['custom_details'][detail_key] = self._process_tal_exprresion(data['payload']['custom_details'][detail_key], environ)
+        return data
 
     def updateContent(self, content=None, data=None):
         updates = dict()
