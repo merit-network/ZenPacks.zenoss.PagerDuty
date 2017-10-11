@@ -79,7 +79,7 @@ class IPagerDutyEventsAPIActionContentInfo(IInfo):
     )
 
     summary = SingleLineText(
-        title       = _t(u'Summary'),
+        title       = _t(u'Description'),
         description = _t(u'The summary for the PagerDuty event.'),
         default     = u'${evt/summary}'
     )
@@ -92,7 +92,7 @@ class IPagerDutyEventsAPIActionContentInfo(IInfo):
 
     details = schema.List(
         title       = _t(u'Details'),
-        description = _t    (u'Custom details to be sent.'),
+        description = _t(u'Custom details to be sent.'),
         default     = [json.dumps(_serialize({
                     u'device':u'${evt/device}',
                     u'message':u'${evt/message}',
