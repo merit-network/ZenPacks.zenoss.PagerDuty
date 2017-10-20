@@ -138,7 +138,7 @@ class PagerDutyEventsAPIAction(IActionBase):
             else:
                 raise ActionExecutionException("Required property '%s' not found" % prop)
 
-        if 'service_key' in notification.content:
+        if NotificationProperties.SERVICE_KEY in notification.content:
             body.update({'routing_key': notification.content['service_key']})
         else:
             raise ActionExecutionException("API Key for PagerDuty service was not found. "

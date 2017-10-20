@@ -25,6 +25,7 @@ class UpdateNotificationContentFields(ZenPackMigration):
     """
     version = Version(1, 2, 0)
     old_properties = ['severity', 'ipAddress']
+    to_delete = ['description', 'incident_key']
 
     def migrate(self, pack):
 
@@ -43,7 +44,10 @@ class UpdateNotificationContentFields(ZenPackMigration):
                     else:
                         continue
                 original_content['details'] = json.dumps(_serialize(updated_details))
+                for old_key in self.to_delete:
+                    original_content.pop(old_key, None)
                 original_content['service_key'] = ''
+                original_content['source'] = '${urls/eventUrl}'
                 notification.content = original_content
 
 
