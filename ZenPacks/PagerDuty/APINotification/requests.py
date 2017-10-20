@@ -35,6 +35,8 @@ class InvalidTokenException(Exception): pass
 class PagerDutyUnreachableException(Exception): pass
 class ParseException(Exception): pass
 
+EVENTS_API2 = 'events_api_v2_inbound_integration'
+
 def _add_default_headers(req):
     _DEFAULT_HEADERS = {'Content-Type' : 'application/json'}
     for header,value in _DEFAULT_HEADERS.iteritems():
@@ -52,7 +54,7 @@ def _invoke_pagerduty_resource_api(uri, headers, json_root, timeout_seconds=None
         params.update({'limit': limit})
 
     uri_parts = list(urlparse.urlparse(uri))
-    uri_parts[4] = urllib.urlencode(params)
+    uri_parts[4] = '%s&%s' % (urllib.urlencode(params), uri_parts[4])
     query_uri = urlparse.urlunparse(uri_parts)
 
     req = urllib2.Request(query_uri)
@@ -94,16 +96,14 @@ def _invoke_pagerduty_resource_api(uri, headers, json_root, timeout_seconds=None
     if type(resource) is not ListType:
         raise ParseException("'%s' is not a list" % json_root)
 
-    total = response.get('total')
+    more = response.get('more')
     limit = response.get('limit')
     offset = response.get('offset')
 
-    if (total is None or limit is None or offset is None):
+    if (limit is None or offset is None):
         return resource
 
-    additionalResultsAvailable = int(total) > (int(offset) + int(limit))
-
-    if additionalResultsAvailable:
+    if more:
         newOffset = offset + limit
         return resource + _invoke_pagerduty_resource_api(uri, headers, json_root, timeout_seconds, limit, newOffset)
     else:
@@ -116,21 +116,28 @@ def retrieve_services(account):
     Returns:
         A list of Service objects.
     """
-    uri = "https://%s.pagerduty.com/api/v1/services" % account.subdomain
-    headers = {'Authorization': 'Token token=' + account.api_access_key}
+    uri = "https://api.pagerduty.com/services?include%5B%5D=integrations"
+    headers = {'Authorization': 'Token token=' + account.api_access_key,
+               'Accept': 'application/vnd.pagerduty+json;version=2'}
     json_root = 'services'
     timeout_seconds = 10
     all_services = _invoke_pagerduty_resource_api(uri, headers, json_root, timeout_seconds)
 
     services = []
     for svcDict in all_services:
-        if ('name' in svcDict
-            and 'id' in svcDict
-            and 'service_key' in svcDict
-            and 'type' in svcDict):
+        if ('name' in svcDict and 'id' in svcDict and 'type' in svcDict):
+            integrations = svcDict['integrations']
+            if not integrations:
+                continue
+            api_v2_integrations = [integration for integration in integrations if str(integration['type']) == EVENTS_API2]
+            if not api_v2_integrations:
+                continue
+            else:
+                # we need any integration of new API type
+                api_v2_integration = api_v2_integrations[0]
             service = Service(name=svcDict['name'],
                               id=svcDict['id'],
-                              service_key=svcDict['service_key'],
+                              service_key=api_v2_integration['integration_key'],
                               type=svcDict['type'])
             services.append(service)
 
