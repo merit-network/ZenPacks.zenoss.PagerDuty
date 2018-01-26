@@ -1,27 +1,38 @@
-ZenPack.PagerDuty.APINotification
-=================================
+ZenPacks.zenoss.PagerDuty
+===============================
 
-The official PagerDuty ZenPack extends Zenoss 4 by providing a new PagerDuty notification type that allows you to easily select which PagerDuty services you want Zenoss to send events to.
+About
+-------------
+This ZenPack extends Zenoss by providing a new PagerDuty notification type that allows to send Zenoss events to PagerDuty services via Events API v1.
 
-The [integration guide](http://www.pagerduty.com/docs/guides/zenoss-4-integration-guide/) provides additional details.
+### Prerequisites
+| Prerequisite     | Restriction |
+| :------- | ---: |
+| Product | Zenoss 4.2.5 or higher    |
+| Required ZenPacks    | None   |
+| Other dependencies     | None |
 
-#License
-Copyright (c) 2013, PagerDuty, Inc. <info@pagerduty.com>
- All rights reserved.
- 
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions are met:
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name of PagerDuty Inc nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
- 
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- DISCLAIMED. IN NO EVENT SHALL PAGERDUTY INC BE LIABLE FOR ANY
- DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ZenPack Installation / Removal
+----------
+Install or remove this ZenPack following the instructions in the Zenoss Resource Manager Admin Guide matching your Zenoss RM version.
+
+Usage
+---------
+**1) Configure  PagerDuty instance**
+In order for PagerDuty to work with Zenoss an API key should be obtained. In PagerDuty dashboard go to Configuration->API access->Create API Key. Choose API version "v1 Legacy". After that create an integration of type "Events API v1" for necessary services.
+
+**2) In Zenoss**
+Go to ADVANCED->Settings->PagerDuty. Enter your PagerDuty subdomain & API key generated before and click "Apply".    
+Afer creating the notification of PagerDuty type, the following properties can be edited in notification content tab:
+
+| Title     |Descritpion  |
+| :------- | :---|
+| Service | PagerDuty Service to send events to.| 
+| Description| A brief text summary of the event.|
+| Source     |The unique location of the affected system.|
+| Details | Object with custom details to be sent. |
+
+
+
+
+
