@@ -27,10 +27,11 @@ class UpdateAccount(ZenPackMigration):
     def migrate(self, pack):
         log.debug("Fetching Account object")
         dmdRoot = pack.zport.dmd
-        old_account = getattr(dmdRoot, ACCOUNT_ATTR)
-        new_account = Account(old_account.subdomain, old_account.api_access_key)
-        log.debug("Setting updated Account object")
-        setattr(dmdRoot, ACCOUNT_ATTR, new_account)
+        old_account = getattr(dmdRoot, ACCOUNT_ATTR, None)
+        if old_account:
+            new_account = Account(old_account.subdomain, old_account.api_access_key)
+            log.debug("Setting updated Account object")
+            setattr(dmdRoot, ACCOUNT_ATTR, new_account)
 
 
 UpdateAccount()

@@ -27,10 +27,11 @@ Afer creating the notification of PagerDuty type, the following properties can b
 
 | Title     |Descritpion  |
 | :------- | :---|
-| Service | PagerDuty Service to send events to.| 
-| Description| A brief text summary of the event.|
-| Source     |The unique location of the affected system.|
-| Details | Object with custom details to be sent. |
+| Service | PagerDuty Service to send events to.|
+| Service API Key | The API Key for the PagerDuty Service you want to alert.|
+| Summary | A brief text summary of the event.|
+| Description |Text that will appear in the incident's log associated with this event.|
+| Incident Key | The incident key for the PagerDuty event. |
 
 
 
