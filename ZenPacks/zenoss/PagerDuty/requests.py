@@ -1,27 +1,11 @@
-# Copyright (c) 2013, PagerDuty, Inc. <info@pagerduty.com>
-# All rights reserved.
+##############################################################################
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#     * Redistributions of source code must retain the above copyright
-#       notice, this list of conditions and the following disclaimer.
-#     * Redistributions in binary form must reproduce the above copyright
-#       notice, this list of conditions and the following disclaimer in the
-#       documentation and/or other materials provided with the distribution.
-#     * Neither the name of PagerDuty Inc nor the
-#       names of its contributors may be used to endorse or promote products
-#       derived from this software without specific prior written permission.
+# Copyright (C) Zenoss, Inc. 2018, all rights reserved.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL PAGERDUTY INC BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# This content is made available according to terms specified in
+# License.zenoss under the directory where your Zenoss product is installed.
+#
+##############################################################################
 
 import json
 import urllib
@@ -34,8 +18,6 @@ from models.service import Service
 class InvalidTokenException(Exception): pass
 class PagerDutyUnreachableException(Exception): pass
 class ParseException(Exception): pass
-
-EVENTS_API2 = 'events_api_v2_inbound_integration'
 
 def _add_default_headers(req):
     _DEFAULT_HEADERS = {'Content-Type' : 'application/json'}
@@ -54,7 +36,7 @@ def _invoke_pagerduty_resource_api(uri, headers, json_root, timeout_seconds=None
         params.update({'limit': limit})
 
     uri_parts = list(urlparse.urlparse(uri))
-    uri_parts[4] = '%s&%s' % (urllib.urlencode(params), uri_parts[4])
+    uri_parts[4] = urllib.urlencode(params)
     query_uri = urlparse.urlunparse(uri_parts)
 
     req = urllib2.Request(query_uri)
@@ -96,14 +78,16 @@ def _invoke_pagerduty_resource_api(uri, headers, json_root, timeout_seconds=None
     if type(resource) is not ListType:
         raise ParseException("'%s' is not a list" % json_root)
 
-    more = response.get('more')
+    total = response.get('total')
     limit = response.get('limit')
     offset = response.get('offset')
 
-    if (limit is None or offset is None):
+    if (total is None or limit is None or offset is None):
         return resource
 
-    if more:
+    additionalResultsAvailable = int(total) > (int(offset) + int(limit))
+
+    if additionalResultsAvailable:
         newOffset = offset + limit
         return resource + _invoke_pagerduty_resource_api(uri, headers, json_root, timeout_seconds, limit, newOffset)
     else:
@@ -116,28 +100,21 @@ def retrieve_services(account):
     Returns:
         A list of Service objects.
     """
-    uri = "https://api.pagerduty.com/services?include%5B%5D=integrations"
-    headers = {'Authorization': 'Token token=' + account.api_access_key,
-               'Accept': 'application/vnd.pagerduty+json;version=2'}
+    uri = "https://%s.pagerduty.com/api/v1/services" % account.subdomain
+    headers = {'Authorization': 'Token token=' + account.api_access_key}
     json_root = 'services'
     timeout_seconds = 10
     all_services = _invoke_pagerduty_resource_api(uri, headers, json_root, timeout_seconds)
 
     services = []
     for svcDict in all_services:
-        if ('name' in svcDict and 'id' in svcDict and 'type' in svcDict):
-            integrations = svcDict['integrations']
-            if not integrations:
-                continue
-            api_v2_integrations = [integration for integration in integrations if str(integration['type']) == EVENTS_API2]
-            if not api_v2_integrations:
-                continue
-            else:
-                # we need any integration of new API type
-                api_v2_integration = api_v2_integrations[0]
+        if ('name' in svcDict
+            and 'id' in svcDict
+            and 'service_key' in svcDict
+            and 'type' in svcDict):
             service = Service(name=svcDict['name'],
                               id=svcDict['id'],
-                              service_key=api_v2_integration['integration_key'],
+                              service_key=svcDict['service_key'],
                               type=svcDict['type'])
             services.append(service)
 

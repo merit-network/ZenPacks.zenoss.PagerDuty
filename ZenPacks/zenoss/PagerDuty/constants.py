@@ -1,4 +1,13 @@
-EVENT_API_URI = 'https://events.pagerduty.com/v2/enqueue'
+##############################################################################
+#
+# Copyright (C) Zenoss, Inc. 2018, all rights reserved.
+#
+# This content is made available according to terms specified in
+# License.zenoss under the directory where your Zenoss product is installed.
+#
+##############################################################################
+
+EVENT_API_URI = 'https://events.pagerduty.com/generic/2010-04-15/create_event.json'
 ALL_PROPERTIES = ['service_key', 'summary', 'description', 'incident_key', 'details']
 
 from models import enum

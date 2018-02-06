@@ -2,15 +2,15 @@
 # These variables are overwritten by Zenoss when the ZenPack is exported
 # or saved.  Do not modify them directly here.
 # NB: PACKAGES is deprecated
-NAME = "ZenPacks.PagerDuty.APINotification"
-VERSION = "1.2.0"
-AUTHOR = "PagerDuty Inc."
-LICENSE = "BSD New"
-NAMESPACE_PACKAGES = ['ZenPacks', 'ZenPacks.PagerDuty']
-PACKAGES = ['ZenPacks', 'ZenPacks.PagerDuty', 'ZenPacks.PagerDuty.APINotification']
+NAME = "ZenPacks.zenoss.PagerDuty"
+VERSION = "1.1.1"
+AUTHOR = "Zenoss"
+LICENSE = ""
+NAMESPACE_PACKAGES = ['ZenPacks', 'ZenPacks.zenoss']
+PACKAGES = ['ZenPacks', 'ZenPacks.zenoss', 'ZenPacks.zenoss.PagerDuty']
 INSTALL_REQUIRES = []
-COMPAT_ZENOSS_VERS = ">= 4.0"
-PREV_ZENPACK_NAME = ""
+COMPAT_ZENOSS_VERS = ">= 4.2.5"
+PREV_ZENPACK_NAME = "ZenPacks.PagerDuty.APINotification"
 # STOP_REPLACEMENTS
 ################################
 # Zenoss will not overwrite any changes you make below here.

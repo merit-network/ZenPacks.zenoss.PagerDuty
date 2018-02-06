@@ -1,27 +1,11 @@
-# Copyright (c) 2013, PagerDuty, Inc. <info@pagerduty.com>
-# All rights reserved.
+##############################################################################
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#     * Redistributions of source code must retain the above copyright
-#       notice, this list of conditions and the following disclaimer.
-#     * Redistributions in binary form must reproduce the above copyright
-#       notice, this list of conditions and the following disclaimer in the
-#       documentation and/or other materials provided with the distribution.
-#     * Neither the name of PagerDuty Inc nor the
-#       names of its contributors may be used to endorse or promote products
-#       derived from this software without specific prior written permission.
+# Copyright (C) Zenoss, Inc. 2018, all rights reserved.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL PAGERDUTY INC BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# This content is made available according to terms specified in
+# License.zenoss under the directory where your Zenoss product is installed.
+#
+##############################################################################
 
 import requests
 import models.account
@@ -32,21 +16,25 @@ from Products.ZenUtils.Ext import DirectRouter, DirectResponse
 
 import json
 import logging
+
 log = logging.getLogger('zen.PagerDuty.ServicesRouter')
 
 ACCOUNT_ATTR = 'pagerduty_account'
 
+
 def _dmdRoot(dmdContext):
     return dmdContext.getObjByPath("/zport/dmd/")
+
 
 def _success(model_obj, msg=None):
     obj_data = json.loads(json.dumps(model_obj, cls=models.serialization.JSONEncoder))
     return DirectResponse.succeed(msg=msg, data=obj_data)
 
+
 def _retrieve_services(account):
     log.info("Fetching list of PagerDuty services for %s..." % account.fqdn())
     try:
-        api_services = requests.retrieve_services(account)
+        all_services = requests.retrieve_services(account)
 
     except requests.InvalidTokenException as e:
         log.warn("Token rejected")
@@ -58,8 +46,10 @@ def _retrieve_services(account):
         log.warn(e.message)
         raise
 
-    log.info("Found %d services with integration of Events API V2  for %s" % (len(api_services), account.fqdn()))
+    api_services = [service for service in all_services if service.type == Service.Type.GenericAPI]
+    log.info("Found %d services for %s" % (len(api_services), account.fqdn()))
     return api_services
+
 
 class AccountRouter(DirectRouter):
     def __init__(self, context, request=None):
@@ -98,10 +88,12 @@ class AccountRouter(DirectRouter):
 
         return result
 
+
 class ServicesRouter(DirectRouter):
     """
     Simple router responsible for fetching the list of services from PagerDuty.
     """
+
     def get_services(self, wants_messages=False):
         dmdRoot = _dmdRoot(self.context)
         no_account_msg = 'PagerDuty account info not set.'
@@ -118,13 +110,15 @@ class ServicesRouter(DirectRouter):
             api_services = _retrieve_services(account)
         except requests.InvalidTokenException:
             msg = 'Your api_access_key was denied.' if wants_messages else None
-            return DirectResponse.fail(msg=msg, inline_message='Access key denied: Go to "Advanced... PagerDuty Settings"')
+            return DirectResponse.fail(msg=msg,
+                                       inline_message='Access key denied: Go to "Advanced... PagerDuty Settings"')
         except requests.PagerDutyUnreachableException as pdue:
             msg = pdue.message if wants_messages else None
             return DirectResponse.fail(msg=msg, inline_message=pdue.message)
 
         if not api_services:
-            msg = ("No services with events integration v2 were found for %s.pagerduty.com." % account.subdomain) if wants_messages else None
+            msg = (
+            "No generic event services were found for %s.pagerduty.com." % account.subdomain) if wants_messages else None
             return DirectResponse.fail(msg=msg)
-        
+
         return _success(api_services)
