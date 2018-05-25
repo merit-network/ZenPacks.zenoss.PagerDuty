@@ -16,21 +16,25 @@ from Products.ZenUtils.Ext import DirectRouter, DirectResponse
 
 import json
 import logging
+
 log = logging.getLogger('zen.PagerDuty.ServicesRouter')
 
 ACCOUNT_ATTR = 'pagerduty_account'
 
+
 def _dmdRoot(dmdContext):
     return dmdContext.getObjByPath("/zport/dmd/")
+
 
 def _success(model_obj, msg=None):
     obj_data = json.loads(json.dumps(model_obj, cls=models.serialization.JSONEncoder))
     return DirectResponse.succeed(msg=msg, data=obj_data)
 
+
 def _retrieve_services(account):
     log.info("Fetching list of PagerDuty services for %s..." % account.fqdn())
     try:
-        api_services = requests.retrieve_services(account)
+        all_services = requests.retrieve_services(account)
 
     except requests.InvalidTokenException as e:
         log.warn("Token rejected")
@@ -42,8 +46,10 @@ def _retrieve_services(account):
         log.warn(e.message)
         raise
 
-    log.info("Found %d services with integration of Events API V2  for %s" % (len(api_services), account.fqdn()))
+    api_services = [service for service in all_services if service.type == Service.Type.GenericAPI]
+    log.info("Found %d services for %s" % (len(api_services), account.fqdn()))
     return api_services
+
 
 class AccountRouter(DirectRouter):
     def __init__(self, context, request=None):
@@ -82,10 +88,12 @@ class AccountRouter(DirectRouter):
 
         return result
 
+
 class ServicesRouter(DirectRouter):
     """
     Simple router responsible for fetching the list of services from PagerDuty.
     """
+
     def get_services(self, wants_messages=False):
         dmdRoot = _dmdRoot(self.context)
         no_account_msg = 'PagerDuty account info not set.'
@@ -102,13 +110,15 @@ class ServicesRouter(DirectRouter):
             api_services = _retrieve_services(account)
         except requests.InvalidTokenException:
             msg = 'Your api_access_key was denied.' if wants_messages else None
-            return DirectResponse.fail(msg=msg, inline_message='Access key denied: Go to "Advanced... PagerDuty Settings"')
+            return DirectResponse.fail(msg=msg,
+                                       inline_message='Access key denied: Go to "Advanced... PagerDuty Settings"')
         except requests.PagerDutyUnreachableException as pdue:
             msg = pdue.message if wants_messages else None
             return DirectResponse.fail(msg=msg, inline_message=pdue.message)
 
         if not api_services:
-            msg = ("No services with events integration v2 were found for %s.pagerduty.com." % account.subdomain) if wants_messages else None
+            msg = (
+            "No generic event services were found for %s.pagerduty.com." % account.subdomain) if wants_messages else None
             return DirectResponse.fail(msg=msg)
-        
+
         return _success(api_services)

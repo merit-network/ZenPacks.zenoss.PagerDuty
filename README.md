@@ -3,7 +3,7 @@ ZenPacks.zenoss.PagerDuty
 
 About
 -------------
-This ZenPack extends Zenoss by providing a new PagerDuty notification type that allows to send Zenoss events to PagerDuty services via Events API v1.
+This ZenPack extends Zenoss by providing a new PagerDuty notification type that allows to send Zenoss events to PagerDuty services via Events API v2.
 
 ### Prerequisites
 | Prerequisite     | Restriction |
@@ -19,7 +19,7 @@ Install or remove this ZenPack following the instructions in the Zenoss Resource
 Usage
 ---------
 **1) Configure  PagerDuty instance**
-In order for PagerDuty to work with Zenoss an API key should be obtained. In PagerDuty dashboard go to Configuration->API access->Create API Key. Choose API version "v1 Legacy". After that create an integration of type "Events API v1" for necessary services.
+In order for PagerDuty to work with Zenoss an API key should be obtained. In PagerDuty dashboard go to Configuration->API access->Create API Key. If you are presented with an option, choose "v2."  After that create an integration of type "Events API v2" for necessary services.
 
 **2) In Zenoss**
 Go to ADVANCED->Settings->PagerDuty. Enter your PagerDuty subdomain & API key generated before and click "Apply".    
