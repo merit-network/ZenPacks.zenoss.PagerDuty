@@ -12,17 +12,13 @@ import urllib2
 import logging
 log = logging.getLogger("zen.pagerduty.actions")
 
-import Globals
-
-from zope.interface import implements, providedBy
+from zope.interface import implements
 from zenoss.protocols.protobufs.zep_pb2 import STATUS_ACKNOWLEDGED
 
-from Products.ZenModel.UserSettings import GroupSettings
 from Products.ZenUtils.guid.guid import GUIDManager
-from Products.ZenUtils.ProcessQueue import ProcessQueue
 
 from Products.ZenModel.interfaces import IAction
-from Products.ZenModel.actions import IActionBase, TargetableAction, ActionExecutionException
+from Products.ZenModel.actions import IActionBase, ActionExecutionException
 from Products.ZenModel.actions import processTalSource, _signalToContextDict
 from Products.ZenModel.ZVersion import VERSION as ZENOSS_VERSION
 
@@ -66,6 +62,7 @@ class PagerDutyEventsAPIAction(IActionBase):
         Sets up the execution environment and POSTs to PagerDuty's Event API.
         """
         log.debug('Executing Pagerduty Events API action: %s', self.name)
+
         self.setupAction(notification.dmd)
 
         if signal.clear:
@@ -85,6 +82,9 @@ class PagerDutyEventsAPIAction(IActionBase):
             device = self.guidManager.getObject(actor.element_uuid)
         environ.update({'dev': device})
 
+        log.debug("PagerDuty notification content: %s", notification.content)
+        log.debug("PagerDuty signal: %s", signal)
+
         component = None
         if actor.element_sub_uuid:
             component = self.guidManager.getObject(actor.element_sub_uuid)
@@ -93,13 +93,16 @@ class PagerDutyEventsAPIAction(IActionBase):
         data = _signalToContextDict(signal, self.options.get('zopeurl'), notification, self.guidManager)
         environ.update(data)
 
+        log.debug("PagerDuty data: %s", data)
+        log.debug("PagerDuty THAT: %s", data['evt'].evid)
+
         try:
-            details_list = json.loads(notification.content['details'])
+            detailsList = json.loads(notification.content['details'])
         except ValueError:
             raise ActionExecutionException('Invalid JSON string in details')
 
         details = dict()
-        for kv in details_list:
+        for kv in detailsList:
             details[kv['key']] = kv['value']
 
         details['zenoss'] = {
@@ -113,6 +116,7 @@ class PagerDutyEventsAPIAction(IActionBase):
             'custom_details': details,
         }
         body = {'event_action': eventType,
+                'dedup_key': data['evt'].evid,
                 'payload': payload}
 
         for prop in REQUIRED_PROPERTIES:
@@ -137,11 +141,13 @@ class PagerDutyEventsAPIAction(IActionBase):
             ActionExecutionException: Some error occurred while contacting
             PagerDuty's Event API (e.g., API down, invalid service key).
         """
-        processed_tales_expressions = self._processTalExpressions(body, environ)
-        processed_tales_expressions['payload']['severity'] = EVENT_MAPPING[processed_tales_expressions['payload']['severity']]
-        request_body = json.dumps(processed_tales_expressions)
+
+        bodyWithProcessedTalesExpressions = self._processTalExpressions(body, environ)
+        bodyWithProcessedTalesExpressions['payload']['severity'] = EVENT_MAPPING[bodyWithProcessedTalesExpressions['payload']['severity']]
+        requestBody = json.dumps(bodyWithProcessedTalesExpressions)
+
         headers = {'Content-Type': 'application/json'}
-        req = urllib2.Request(EVENT_API_URI, request_body, headers)
+        req = urllib2.Request(EVENT_API_URI, requestBody, headers)
         try:
             f = urllib2.urlopen(req, None, API_TIMEOUT_SECONDS)
         except urllib2.URLError as e:
@@ -155,9 +161,10 @@ class PagerDutyEventsAPIAction(IActionBase):
                 raise ActionExecutionException('Unknown URLError occurred')
 
         response = f.read()
+        log.debug('PagerDuty response: %s', response)
         f.close()
 
-    def _process_tal_exprresion(self, value, environ):
+    def _processTalExpression(self, value, environ):
         if type(value) is str or type(value) is unicode:
             if '${' not in value:
                 return value
@@ -170,11 +177,12 @@ class PagerDutyEventsAPIAction(IActionBase):
             return value
 
     def _processTalExpressions(self, data, environ):
-        for payload_key in data['payload']:
-            if not payload_key.startswith('custom_details'):
-                data['payload'][payload_key] = self._process_tal_exprresion(data['payload'][payload_key], environ)
-        for detail_key in data['payload']['custom_details']:
-            data['payload']['custom_details'][detail_key] = self._process_tal_exprresion(data['payload']['custom_details'][detail_key], environ)
+        for payloadKey in data['payload']:
+            if not payloadKey.startswith('custom_details'):
+                data['payload'][payloadKey] = self._processTalExpression(data['payload'][payloadKey], environ)
+        for detailKey in data['payload']['custom_details']:
+            data['payload']['custom_details'][detailKey] = self._processTalExpression(data['payload']['custom_details'][detailKey], environ)
+        data['dedup_key'] = self._processTalExpression(data['dedup_key'], environ)
         return data
 
     def updateContent(self, content=None, data=None):

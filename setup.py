@@ -18,6 +18,12 @@ PREV_ZENPACK_NAME = "ZenPacks.PagerDuty.APINotification"
 import os
 from subprocess import Popen, PIPE
 from setuptools import setup, find_packages
+import sys
+
+TEST_DEPENDENCY_LINKS = []
+if 'test' in sys.argv:
+    TEST_DEPENDENCY_LINKS = []
+
 
 # Run "make build" if a GNUmakefile is present.
 if os.path.isfile('GNUmakefile'):
@@ -76,4 +82,7 @@ setup(
 
     # All ZenPack eggs must be installed in unzipped form.
     zip_safe=False,
+
+    dependency_links=TEST_DEPENDENCY_LINKS,
+    tests_require=INSTALL_REQUIRES,
 )

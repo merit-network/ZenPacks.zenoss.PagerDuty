@@ -9,7 +9,6 @@
 
 import requests
 import models.account
-from models.service import Service
 import models.serialization
 
 from Products.ZenUtils.Ext import DirectRouter, DirectResponse

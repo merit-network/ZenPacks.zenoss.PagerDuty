@@ -16,8 +16,6 @@ from Products.Zuul.utils import ZuulMessageFactory as _t
 from Products.ZenModel.ZVersion import VERSION as ZENOSS_VERSION
 from Products.ZenUtils.Version import Version
 
-import textwrap
-
 # Make the UI look good in Zenoss 3 and Zenoss 4
 if Version.parse('Zenoss %s' % ZENOSS_VERSION) >= Version.parse('Zenoss 4'):
     SingleLineText = schema.TextLine

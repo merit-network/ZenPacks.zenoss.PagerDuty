@@ -7,8 +7,6 @@
 #
 ##############################################################################
 
-import Globals
-
 from zope.component import adapts
 from zope.interface import implements
 
