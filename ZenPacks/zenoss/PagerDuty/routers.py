@@ -95,7 +95,7 @@ class ServicesRouter(DirectRouter):
 
         account = getattr(dmdRoot, ACCOUNT_ATTR)
         if not account.apiAccessKey or not account.subdomain:
-            return DirectResponse.fail(msg=msg, inline_essage=setUpApiKeyInlineMsg)
+            return DirectResponse.fail(msg=msg, inline_message=setUpApiKeyInlineMsg)
 
         try:
             apiServices = _retrieveServices(account)
