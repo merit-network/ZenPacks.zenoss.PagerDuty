@@ -6,3 +6,4 @@
 tests/__init__.py
 ZenPacks/zenoss/PagerDuty/tests/standalone
 \#*\#
+*~
