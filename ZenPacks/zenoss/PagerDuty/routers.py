@@ -56,7 +56,7 @@ class AccountRouter(DirectRouter):
         account = getattr(dmdRoot, ACCOUNT_ATTR, models.account.Account(None, None))
         return _success(account)
 
-    def updateAccountSettings(self, api_accessKey=None, subdomain=None, wantsMessages=True):
+    def updateAccountSettings(self, apiAccessKey=None, subdomain=None, wantsMessages=True):
         """
         Saves the account object and returns a list of services associated
         with that account.  Returns nothing if invalid account info is set.
