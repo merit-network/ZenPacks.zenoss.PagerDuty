@@ -21,12 +21,12 @@ class ParseException(Exception): pass
 
 EVENTS_API2 = 'events_api_v2_inbound_integration'
 
-def _add_default_headers(req):
+def _addDefaultHeaders(req):
     _DEFAULT_HEADERS = {'Content-Type' : 'application/json'}
     for header,value in _DEFAULT_HEADERS.iteritems():
         req.add_header(header, value)
 
-def _invoke_pagerduty_resource_api(uri, headers, json_root, timeout_seconds=None, limit=None, offset=None):
+def _invokePagerdutyResourceApi(uri, headers, jsonRoot, timeoutSeconds=None, limit=None, offset=None):
     """
     Calls the PagerDuty API at uri and paginates through all of the results.
     """
@@ -37,17 +37,17 @@ def _invoke_pagerduty_resource_api(uri, headers, json_root, timeout_seconds=None
     if limit is not None:
         params.update({'limit': limit})
 
-    uri_parts = list(urlparse.urlparse(uri))
-    uri_parts[4] = '%s&%s' % (urllib.urlencode(params), uri_parts[4])
-    query_uri = urlparse.urlunparse(uri_parts)
+    uriParts = list(urlparse.urlparse(uri))
+    uriParts[4] = '%s&%s' % (urllib.urlencode(params), uriParts[4])
+    queryUri = urlparse.urlunparse(uriParts)
 
-    req = urllib2.Request(query_uri)
+    req = urllib2.Request(queryUri)
     for header,value in headers.iteritems():
         req.add_header(header, value)
-    _add_default_headers(req)
+    _addDefaultHeaders(req)
 
     try:
-        f = urllib2.urlopen(req, None, timeout_seconds)
+        f = urllib2.urlopen(req, None, timeoutSeconds)
     except urllib2.URLError as e:
         if hasattr(e, 'code'):
             if e.code == 401: # Unauthorized
@@ -61,24 +61,24 @@ def _invoke_pagerduty_resource_api(uri, headers, json_root, timeout_seconds=None
         else:
             raise PagerDutyUnreachableException()
 
-    response_data = f.read()
+    responseData = f.read()
     f.close()
 
     try:
-        response = json.loads(response_data)
+        response = json.loads(responseData)
     except ValueError as e:
         raise ParseException(e.message)
 
     if type(response) is not DictType:
         raise ParseException('Dictionary not returned')
 
-    if json_root not in response:
-        raise ParseException("Missing '%s' key in API response" % json_root)
+    if jsonRoot not in response:
+        raise ParseException("Missing '%s' key in API response" % jsonRoot)
 
-    resource = response[json_root]
+    resource = response[jsonRoot]
 
     if type(resource) is not ListType:
-        raise ParseException("'%s' is not a list" % json_root)
+        raise ParseException("'%s' is not a list" % jsonRoot)
 
     more = response.get('more')
     limit = response.get('limit')
@@ -89,11 +89,11 @@ def _invoke_pagerduty_resource_api(uri, headers, json_root, timeout_seconds=None
 
     if more:
         newOffset = offset + limit
-        return resource + _invoke_pagerduty_resource_api(uri, headers, json_root, timeout_seconds, limit, newOffset)
+        return resource + _invokePagerdutyResourceApi(uri, headers, jsonRoot, timeoutSeconds, limit, newOffset)
     else:
         return resource
 
-def retrieve_services(account):
+def retrieveServices(account):
     """
     Fetches the list of all services for an Account from the PagerDuty API.
 
@@ -103,25 +103,25 @@ def retrieve_services(account):
     uri = "https://api.pagerduty.com/services?include%5B%5D=integrations"
     headers = {'Authorization': 'Token token=' + account.api_access_key,
                'Accept': 'application/vnd.pagerduty+json;version=2'}
-    json_root = 'services'
-    timeout_seconds = 10
-    all_services = _invoke_pagerduty_resource_api(uri, headers, json_root, timeout_seconds)
+    jsonRoot = 'services'
+    timeoutSeconds = 10
+    allServices = _invokePagerdutyResourceApi(uri, headers, jsonRoot, timeoutSeconds)
 
     services = []
-    for svcDict in all_services:
+    for svcDict in allServices:
         if ('name' in svcDict and 'id' in svcDict and 'type' in svcDict):
             integrations = svcDict['integrations']
             if not integrations:
                 continue
-            api_v2_integrations = [integration for integration in integrations if str(integration['type']) == EVENTS_API2]
-            if not api_v2_integrations:
+            apiV2Integrations = [integration for integration in integrations if str(integration['type']) == EVENTS_API2]
+            if not apiV2Integrations:
                 continue
             else:
                 # we need any integration of new API type
-                api_v2_integration = api_v2_integrations[0]
+                apiV2Integration = apiV2Integrations[0]
             service = Service(name=svcDict['name'],
                               id=svcDict['id'],
-                              service_key=api_v2_integration['integration_key'],
+                              serviceKey=apiV2Integration['integration_key'],
                               type=svcDict['type'])
             services.append(service)
 

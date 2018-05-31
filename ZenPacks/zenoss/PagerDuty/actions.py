@@ -82,9 +82,6 @@ class PagerDutyEventsAPIAction(IActionBase):
             device = self.guidManager.getObject(actor.element_uuid)
         environ.update({'dev': device})
 
-        log.debug("PagerDuty notification content: %s", notification.content)
-        log.debug("PagerDuty signal: %s", signal)
-
         component = None
         if actor.element_sub_uuid:
             component = self.guidManager.getObject(actor.element_sub_uuid)
@@ -92,9 +89,6 @@ class PagerDutyEventsAPIAction(IActionBase):
 
         data = _signalToContextDict(signal, self.options.get('zopeurl'), notification, self.guidManager)
         environ.update(data)
-
-        log.debug("PagerDuty data: %s", data)
-        log.debug("PagerDuty THAT: %s", data['evt'].evid)
 
         try:
             detailsList = json.loads(notification.content['details'])
@@ -182,7 +176,6 @@ class PagerDutyEventsAPIAction(IActionBase):
                 data['payload'][payloadKey] = self._processTalExpression(data['payload'][payloadKey], environ)
         for detailKey in data['payload']['custom_details']:
             data['payload']['custom_details'][detailKey] = self._processTalExpression(data['payload']['custom_details'][detailKey], environ)
-        data['dedup_key'] = self._processTalExpression(data['dedup_key'], environ)
         return data
 
     def updateContent(self, content=None, data=None):
