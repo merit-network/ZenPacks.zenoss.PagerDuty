@@ -12,17 +12,13 @@ import urllib2
 import logging
 log = logging.getLogger("zen.pagerduty.actions")
 
-import Globals
-
-from zope.interface import implements, providedBy
+from zope.interface import implements
 from zenoss.protocols.protobufs.zep_pb2 import STATUS_ACKNOWLEDGED
 
-from Products.ZenModel.UserSettings import GroupSettings
 from Products.ZenUtils.guid.guid import GUIDManager
-from Products.ZenUtils.ProcessQueue import ProcessQueue
 
 from Products.ZenModel.interfaces import IAction
-from Products.ZenModel.actions import IActionBase, TargetableAction, ActionExecutionException
+from Products.ZenModel.actions import IActionBase, ActionExecutionException
 from Products.ZenModel.actions import processTalSource, _signalToContextDict
 from Products.ZenModel.ZVersion import VERSION as ZENOSS_VERSION
 
@@ -30,13 +26,16 @@ from ZenPacks.zenoss.PagerDuty.interfaces import IPagerDutyEventsAPIActionConten
 from ZenPacks.zenoss.PagerDuty.constants import EVENT_API_URI, EventType, enum
 from ZenPacks.zenoss.PagerDuty import version as zenpack_version
 
-NotificationProperties = enum(SERVICE_KEY='service_key', SUMMARY='summary', DESCRIPTION='description',
-                              INCIDENT_KEY='incident_key', DETAILS='details')
+NotificationProperties = enum(SUMMARY='summary', SOURCE='source', SERVICE_KEY='service_key',
+                              DETAILS='details')
 
-REQUIRED_PROPERTIES = [NotificationProperties.SERVICE_KEY, NotificationProperties.SUMMARY,
-                       NotificationProperties.DESCRIPTION, NotificationProperties.INCIDENT_KEY]
+REQUIRED_PROPERTIES = [NotificationProperties.SUMMARY, NotificationProperties.SOURCE]
+
+EVENT_MAPPING = {'0': 'info', '1': 'info', '2': 'info',
+                 '3': 'warning', '4': 'error', '5': 'critical'}
 
 API_TIMEOUT_SECONDS = 40
+
 
 class PagerDutyEventsAPIAction(IActionBase):
     """
@@ -63,6 +62,7 @@ class PagerDutyEventsAPIAction(IActionBase):
         Sets up the execution environment and POSTs to PagerDuty's Event API.
         """
         log.debug('Executing Pagerduty Events API action: %s', self.name)
+
         self.setupAction(notification.dmd)
 
         if signal.clear:
@@ -73,7 +73,7 @@ class PagerDutyEventsAPIAction(IActionBase):
             eventType = EventType.TRIGGER
 
         # Set up the TALES environment
-        environ = {'dmd': notification.dmd, 'env':None}
+        environ = {'dmd':notification.dmd, 'env':None}
 
         actor = signal.event.occurrence[0].actor
 
@@ -91,28 +91,39 @@ class PagerDutyEventsAPIAction(IActionBase):
         environ.update(data)
 
         try:
-            details_list = json.loads(notification.content['details'])
+            detailsList = json.loads(notification.content['details'])
         except ValueError:
             raise ActionExecutionException('Invalid JSON string in details')
 
         details = dict()
-        for kv in details_list:
+        for kv in detailsList:
             details[kv['key']] = kv['value']
 
         details['zenoss'] = {
-            'version'        : ZENOSS_VERSION,
-            'zenpack_version': zenpack_version()
+            'version': ZENOSS_VERSION,
+            'zenpack_version': zenpack_version(),
         }
-        body = {'event_type': eventType,
-                'client'    : 'Zenoss',
-                'client_url': '${urls/eventUrl}',
-                'details'   : details}
+
+        payload = {
+            'severity': '${evt/severity}',
+            'class': '${evt/eventClass}',
+            'custom_details': details,
+        }
+        body = {'event_action': eventType,
+                'dedup_key': data['evt'].evid,
+                'payload': payload}
 
         for prop in REQUIRED_PROPERTIES:
             if prop in notification.content:
-                body[prop] = notification.content[prop]
+                payload.update({prop: notification.content[prop]})
             else:
-                raise ActionExecutionException("Required property '%s' not found" % (prop))
+                raise ActionExecutionException("Required property '%s' not found" % prop)
+
+        if NotificationProperties.SERVICE_KEY in notification.content:
+            body.update({'routing_key': notification.content['service_key']})
+        else:
+            raise ActionExecutionException("API Key for PagerDuty service was not found. "
+                                           "Did you configure a notification correctly?")
 
         self._performRequest(body, environ)
 
@@ -124,10 +135,13 @@ class PagerDutyEventsAPIAction(IActionBase):
             ActionExecutionException: Some error occurred while contacting
             PagerDuty's Event API (e.g., API down, invalid service key).
         """
-        request_body = json.dumps(self._processTalExpressions(body, environ))
 
-        headers = {'Content-Type' : 'application/json'}
-        req = urllib2.Request(EVENT_API_URI, request_body, headers)
+        bodyWithProcessedTalesExpressions = self._processTalExpressions(body, environ)
+        bodyWithProcessedTalesExpressions['payload']['severity'] = EVENT_MAPPING[bodyWithProcessedTalesExpressions['payload']['severity']]
+        requestBody = json.dumps(bodyWithProcessedTalesExpressions)
+
+        headers = {'Content-Type': 'application/json'}
+        req = urllib2.Request(EVENT_API_URI, requestBody, headers)
         try:
             f = urllib2.urlopen(req, None, API_TIMEOUT_SECONDS)
         except urllib2.URLError as e:
@@ -141,23 +155,28 @@ class PagerDutyEventsAPIAction(IActionBase):
                 raise ActionExecutionException('Unknown URLError occurred')
 
         response = f.read()
+        log.debug('PagerDuty response: %s', response)
         f.close()
 
-    def _processTalExpressions(self, data, environ):
-        if type(data) is str or type(data) is unicode:
-            if '${' not in data:
-                return data
+    def _processTalExpression(self, value, environ):
+        if type(value) is str or type(value) is unicode:
+            if '${' not in value:
+                return value
             try:
-                return processTalSource(data, **environ)
+                return processTalSource(value, **environ)
             except Exception:
                 raise ActionExecutionException(
-                    'Unable to perform TALES evaluation on "%s" -- is there an unescaped $?' % data)
-        elif type(data) is list:
-            return [self._processTalExpressions(e, environ) for e in data]
-        elif type(data) is dict:
-            return dict([(k, self._processTalExpressions(v, environ)) for (k, v) in data.iteritems()])
+                    'Unable to perform TALES evaluation on "%s" -- is there an unescaped $?' % value)
         else:
-            return data
+            return value
+
+    def _processTalExpressions(self, data, environ):
+        for payloadKey in data['payload']:
+            if not payloadKey.startswith('custom_details'):
+                data['payload'][payloadKey] = self._processTalExpression(data['payload'][payloadKey], environ)
+        for detailKey in data['payload']['custom_details']:
+            data['payload']['custom_details'][detailKey] = self._processTalExpression(data['payload']['custom_details'][detailKey], environ)
+        return data
 
     def updateContent(self, content=None, data=None):
         updates = dict()
