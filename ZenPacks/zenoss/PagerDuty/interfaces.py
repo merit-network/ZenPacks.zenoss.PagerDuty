@@ -36,7 +36,7 @@ class IPagerDutyEventsAPIActionContentInfo(IInfo):
     info.PagerDutyEventsAPIActionContentInfo.
     """
 
-    service_key = SingleLineText(
+    serviceKey = SingleLineText(
         title       = _t(u'Service API Key'),
         description = _t(u'The API Key for the PagerDuty Service you want to alert.'),
         xtype       = 'pagerduty-api-events-service-list'

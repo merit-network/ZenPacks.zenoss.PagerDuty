@@ -72,7 +72,7 @@ class AccountRouter(DirectRouter):
             return DirectResponse.succeed()
 
         servicesRouter = ServicesRouter(self.context, self.request)
-        result = servicesRouter.get_services(wantsMessages)
+        result = servicesRouter.getServices(wantsMessages)
 
         if result.data['success']:
             result.data['msg'] = "PagerDuty services retrieved successfully."
@@ -100,7 +100,7 @@ class ServicesRouter(DirectRouter):
         try:
             apiServices = _retrieveServices(account)
         except requests.InvalidTokenException:
-            msg = 'Your api_access_key was denied.' if wantsMessages else None
+            msg = 'Your API Access Key was denied.' if wantsMessages else None
             return DirectResponse.fail(msg=msg, inline_message='Access key denied: Go to "Advanced... PagerDuty Settings"')
         except requests.PagerDutyUnreachableException as pdue:
             msg = pdue.message if wantsMessages else None

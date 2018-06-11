@@ -26,7 +26,7 @@ from ZenPacks.zenoss.PagerDuty.interfaces import IPagerDutyEventsAPIActionConten
 from ZenPacks.zenoss.PagerDuty.constants import EVENT_API_URI, EventType, enum
 from ZenPacks.zenoss.PagerDuty import version as zenpack_version
 
-NotificationProperties = enum(SUMMARY='summary', SOURCE='source', SERVICE_KEY='service_key',
+NotificationProperties = enum(SUMMARY='summary', SOURCE='source', SERVICE_KEY='serviceKey',
                               DETAILS='details')
 
 REQUIRED_PROPERTIES = [NotificationProperties.SUMMARY, NotificationProperties.SOURCE]
@@ -120,7 +120,7 @@ class PagerDutyEventsAPIAction(IActionBase):
                 raise ActionExecutionException("Required property '%s' not found" % prop)
 
         if NotificationProperties.SERVICE_KEY in notification.content:
-            body.update({'routing_key': notification.content['service_key']})
+            body.update({'routing_key': notification.content['serviceKey']})
         else:
             raise ActionExecutionException("API Key for PagerDuty service was not found. "
                                            "Did you configure a notification correctly?")
