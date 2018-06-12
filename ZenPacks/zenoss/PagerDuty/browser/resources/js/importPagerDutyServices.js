@@ -1,7 +1,7 @@
 (function(){
     Ext.onReady(function(){
-        var account_router = Zenoss.remote.AccountRouter;
-        var services_router = Zenoss.remote.ServicesRouter;
+        var accountRouter = Zenoss.remote.AccountRouter;
+        var servicesRouter = Zenoss.remote.ServicesRouter;
 
         Ext.define('com.pagerduty.ImportServicePanel', {
             extend: 'Ext.form.Panel',
@@ -28,7 +28,7 @@
                 {
                     fieldLabel: 'API Access Key',
                     labelWidth: 150,
-                    name: 'api_access_key',
+                    name: 'apiAccessKey',
                     width: 400,
                     xtype: 'textfield'
                 },
@@ -65,14 +65,14 @@
                 this.load();
             },
             load: function() {
-                account_router.get_account_settings({}, function(result) {
+                accountRouter.getAccountSettings({}, function(result) {
                     if (!result.success)
                         return;
 
                     this.getForm().setValues(result.data);
 
-                    if (result.data.api_access_key && result.data.subdomain) {
-                        services_router.get_services({wants_messages: true}, function(result) {
+                    if (result.data.apiAccessKey && result.data.subdomain) {
+                        servicesRouter.getServices({wantsMessages: true}, function(result) {
                             var pdServiceStore = Ext.data.StoreManager.lookup('pdServiceStore');
                             pdServiceStore.loadData((result.success && result.data) ? result.data : []);
                         }, this);
@@ -81,7 +81,7 @@
             },
             submit: function() {
                 var values = this.getForm().getValues();
-                account_router.update_account_settings(values, function(result) {
+                accountRouter.updateAccountSettings(values, function(result) {
                     var pdServiceStore = Ext.data.StoreManager.lookup('pdServiceStore');
                     pdServiceStore.loadData((result.success && result.data) ? result.data : []);
                 });

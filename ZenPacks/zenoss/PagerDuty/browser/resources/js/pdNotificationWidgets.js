@@ -1,6 +1,6 @@
 (function(){
     Ext.onReady(function() {
-        var services_router = Zenoss.remote.ServicesRouter;
+        var servicesRouter = Zenoss.remote.ServicesRouter;
 
         /**
          * Frontend definition of a service
@@ -10,7 +10,7 @@
             fields: [
                 {name: 'name',        type: 'string'},
                 {name: 'id',          type: 'string'},
-                {name: 'service_key', type: 'string'},
+                {name: 'serviceKey', type: 'string'},
                 {name: 'type',        type: 'string'}
             ]
         });
@@ -25,15 +25,15 @@
          * the combo box updates the service key.
          *
          * The list of services in the combo box is dynamically populated by
-         * calling services_router.get_services, which in turn calls PagerDuty's
+         * calling servicesRouter.getServices, which in turn calls PagerDuty's
          * service API.  If the request to PagerDuty's service API fails for
          * any reason, the combo box is hidden and replaced with a text box
-         * detailing the error message (service_list_error).
+         * detailing the error message (serviceListError).
          */
         Ext.define('pagerduty.api.events.ServiceListWidget', {
             extend: 'Ext.container.Container',
             alias: 'widget.pagerduty-api-events-service-list',
-            name: 'service_key',
+            name: 'serviceKey',
             layout:'anchor',
             id: 'pdServiceList',
             defaults: {
@@ -43,7 +43,7 @@
                 var container = this;
 
                 this.store = Ext.create('Zenoss.NonPaginatedStore', {
-                    storeId: 'service_store',
+                    storeId: 'serviceStore',
                     root: 'data',
                     autoLoad: true,
                     model: 'pagerduty.model.Service',
@@ -56,7 +56,7 @@
                         startParam:undefined,
                         pageParam:undefined,
                         sortParam: undefined,
-                        directFn: services_router.get_services,
+                        directFn: servicesRouter.getServices,
                         reader: {
                             type:'json',
                             root: 'data'
@@ -77,61 +77,61 @@
                     listeners:  {
                         load: function() {
                             this.loaded = true;
-                            var combo = Ext.getCmp('service_list_combo');
+                            var combo = Ext.getCmp('serviceListCombo');
                             combo.synchronize();
                         }
                     }
                 });
 
-                var service_list_combo = Ext.create('Ext.form.field.ComboBox',
+                var serviceListCombo = Ext.create('Ext.form.field.ComboBox',
                     {
-                        name: 'service_list_combo',
-                        id: 'service_list_combo',
+                        name: 'serviceListCombo',
+                        id: 'serviceListCombo',
                         queryMode: 'local',
-                        valueField: 'service_key',
+                        valueField: 'serviceKey',
                         displayField: 'name',
                         forceSelection: true,
                         fieldLabel: _t('Service'),
                         store: container.store,
                         listeners: {
                             select: function (combo, record, index) {
-                                Ext.getCmp('service_key_textfield').synchronize(combo.value)
+                                Ext.getCmp('serviceKeyTextfield').synchronize(combo.value)
                             }
                         },
                         synchronize: function() {
                             // Make the combo box match the text field
-                            var service_key = Ext.getCmp('service_key_textfield').value;
-                            var service_record = this.findRecordByValue(service_key);
-                            if (service_record) {
-                                this.setValue(service_key);
+                            var serviceKey = Ext.getCmp('serviceKeyTextfield').value;
+                            var serviceRecord = this.findRecordByValue(serviceKey);
+                            if (serviceRecord) {
+                                this.setValue(serviceKey);
                             } else {
                                 this.setValue(null);
                             }
                         }
                     });
 
-                var service_list_error = Ext.create('Ext.form.field.Text',
+                var serviceListError = Ext.create('Ext.form.field.Text',
                     {
-                        name: 'service_list_error',
-                        id: 'service_list_error',
+                        name: 'serviceListError',
+                        id: 'serviceListError',
                         fieldLabel: _t('Service'),
                         hidden: true,
                         readOnly: true
                     });
 
-                var service_key_textfield = Ext.create('Ext.form.field.Text',
+                var serviceKeyTextfield = Ext.create('Ext.form.field.Text',
                     {
-                        name: 'service_key',
-                        id: 'service_key_textfield',
+                        name: 'serviceKey',
+                        id: 'serviceKeyTextfield',
                         fieldLabel: _t('Service API Key'),
                         listeners: {
                             change: function() {
                                 if (this.synchronizing)
                                     return;
 
-                                var store = Ext.data.StoreManager.lookup('service_store');
+                                var store = Ext.data.StoreManager.lookup('serviceStore');
                                 if (store.isLoaded()) {
-                                    var combo = Ext.getCmp('service_list_combo');
+                                    var combo = Ext.getCmp('serviceListCombo');
                                     combo.synchronize();
                                 }
                             }
@@ -145,20 +145,20 @@
                         }
                     });
 
-                this.items = [service_list_combo, service_list_error, service_key_textfield];
+                this.items = [serviceListCombo, serviceListError, serviceKeyTextfield];
 
                 if (this.value) {
-                    service_key_textfield.setValue(this.value);
+                    serviceKeyTextfield.setValue(this.value);
                 }
 
                 this.callParent(arguments);
             },
             showError: function(msg) {
-                var service_list_error = Ext.getCmp('service_list_error');
-                var service_list_combo = Ext.getCmp('service_list_combo');
-                service_list_combo.hide();
-                service_list_error.show();
-                service_list_error.setValue(msg);
+                var serviceListError = Ext.getCmp('serviceListError');
+                var serviceListCombo = Ext.getCmp('serviceListCombo');
+                serviceListCombo.hide();
+                serviceListError.show();
+                serviceListError.setValue(msg);
             }
 
         }); // Ext.define DetailsField
@@ -186,7 +186,7 @@
                     proxy: {type: 'memory'},
                     listeners: {
                         write: function(store, operation) {
-                            if (!hidden_field) {
+                            if (!hiddenField) {
                                 return;
                             }
 
@@ -198,19 +198,19 @@
                                 }
                             });
 
-                            hidden_field.setValue(Ext.JSON.encode(vs));
+                            hiddenField.setValue(Ext.JSON.encode(vs));
                         }
                     }
                 });
 
-                var hidden_field = Ext.create('Ext.form.field.Hidden', {name: 'details'});
+                var hiddenField = Ext.create('Ext.form.field.Hidden', {name: 'details'});
 
-                var row_editor = Ext.create('Ext.grid.plugin.RowEditing');
+                var rowEditor = Ext.create('Ext.grid.plugin.RowEditing');
 
-                var grid_panel = Ext.create('Ext.grid.Panel', {
+                var gridPanel = Ext.create('Ext.grid.Panel', {
                     title: _t('Details'),
                     height: 200,
-                    plugins: [row_editor],
+                    plugins: [rowEditor],
                     store: store,
 
                     dockedItems: [{
@@ -221,14 +221,14 @@
                             iconCls: 'add_button',
                             handler: function() {
                                 store.insert(0, {key: '', value: ''});
-                                row_editor.startEdit(0, 0);
+                                rowEditor.startEdit(0, 0);
                             }
                         }, '-', {
                             itemId: 'delete',
                             text: 'Delete',
                             iconCls: 'delete',
                             handler: function() {
-                                var selection = grid_panel.getView().getSelectionModel().getSelection()[0];
+                                var selection = gridPanel.getView().getSelectionModel().getSelection()[0];
                                 if (selection) {
                                     store.remove(selection);
                                     store.sync();
@@ -252,10 +252,10 @@
                     }]
                 });
 
-                this.items = [hidden_field, grid_panel];
+                this.items = [hiddenField, gridPanel];
 
                 if (this.value) {
-                    hidden_field.setValue(this.value);
+                    hiddenField.setValue(this.value);
                     store.loadData(Ext.JSON.decode(this.value));
                 }
 

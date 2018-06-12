@@ -26,7 +26,7 @@ class PagerDutyEventsAPIActionContentInfo(InfoBase):
     implements(IPagerDutyEventsAPIActionContentInfo)
     adapts(NotificationSubscription)
 
-    service_key = ActionFieldProperty(IPagerDutyEventsAPIActionContentInfo, 'service_key')
+    serviceKey = ActionFieldProperty(IPagerDutyEventsAPIActionContentInfo, 'serviceKey')
     summary = ActionFieldProperty(IPagerDutyEventsAPIActionContentInfo, 'summary')
     source = ActionFieldProperty(IPagerDutyEventsAPIActionContentInfo, 'source')
     details = ActionFieldProperty(IPagerDutyEventsAPIActionContentInfo, 'details')

@@ -16,9 +16,9 @@ class Account(Persistent):
     """
     A PagerDuty account consists of a subdomain and API access key.
     """
-    def __init__(self, subdomain, api_access_key):
+    def __init__(self, subdomain, apiAccessKey):
         self.subdomain = subdomain
-        self.api_access_key = api_access_key
+        self.apiAccessKey = apiAccessKey
 
     def fqdn(self):
         return "%s.pagerduty.com" % self.subdomain

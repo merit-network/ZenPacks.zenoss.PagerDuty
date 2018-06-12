@@ -13,14 +13,14 @@ import json
 
 class Service(object):
     """A single PagerDuty service"""
-    def __init__(self, name, id, service_key, type):
+    def __init__(self, name, id, serviceKey, type):
         self.name = name
         self.id = id
-        self.service_key = service_key
+        self.serviceKey = serviceKey
         self.type = type
 
     def __repr__(self):
-        return "Service(name='%s', id='%s', service_key='%s', type='%s')" % (self.name, self.id, self.service_key, self.type)
+        return "Service(name='%s', id='%s', serviceKey='%s', type='%s')" % (self.name, self.id, self.serviceKey, self.type)
 
     def __json__(self):
         return json.dumps(self, cls=serialization.JSONEncoder)

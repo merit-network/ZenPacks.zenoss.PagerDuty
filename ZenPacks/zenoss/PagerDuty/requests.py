@@ -1,4 +1,4 @@
-##############################################################################
+#############################################################################
 #
 # Copyright (C) Zenoss, Inc. 2018, all rights reserved.
 #
@@ -101,7 +101,7 @@ def retrieveServices(account):
         A list of Service objects.
     """
     uri = "https://api.pagerduty.com/services?include%5B%5D=integrations"
-    headers = {'Authorization': 'Token token=' + account.api_access_key,
+    headers = {'Authorization': 'Token token=' + account.apiAccessKey,
                'Accept': 'application/vnd.pagerduty+json;version=2'}
     jsonRoot = 'services'
     timeoutSeconds = 10
