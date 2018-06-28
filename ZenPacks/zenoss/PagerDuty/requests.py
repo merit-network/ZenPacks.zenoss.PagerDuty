@@ -101,13 +101,13 @@ def validateAndAddServiceModels(servicesFromResponse):
             and 'type' in svcDict
             and 'integrations' in svcDict
             and len(svcDict['integrations']) >= 1):
-            integration = svcDict['integrations'][0]
-            if 'integration_key' in integration:
-                service = Service(name=svcDict['name'],
-                                  id=svcDict['id'],
-                                  serviceKey=integration['integration_key'],
-                                  type=svcDict['type'])
-                services.append(service)
+                integration = svcDict['integrations'][0]
+                if 'integration_key' in integration:
+                    service = Service(name=svcDict['name'],
+                                      id=svcDict['id'],
+                                      serviceKey=integration['integration_key'],
+                                      type=svcDict['type'])
+                    services.append(service)
 
     return services
 
