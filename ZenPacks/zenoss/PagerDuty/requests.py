@@ -15,18 +15,31 @@ import urllib2
 from types import DictType, ListType
 from models.service import Service
 
-class InvalidTokenException(Exception): pass
-class PagerDutyUnreachableException(Exception): pass
-class ParseException(Exception): pass
 
-EVENTS_API2 = 'events_api_v2_inbound_integration'
+class InvalidTokenException(Exception):
+    pass
+
+
+class PagerDutyUnreachableException(Exception):
+    pass
+
+
+class ParseException(Exception):
+    pass
+
 
 def _addDefaultHeaders(req):
-    _DEFAULT_HEADERS = {'Content-Type' : 'application/json'}
-    for header,value in _DEFAULT_HEADERS.iteritems():
+    _DEFAULT_HEADERS = {'Content-Type': 'application/json'}
+    for header, value in _DEFAULT_HEADERS.iteritems():
         req.add_header(header, value)
 
-def _invokePagerdutyResourceApi(uri, headers, jsonRoot, timeoutSeconds=None, limit=None, offset=None):
+
+def _invokePagerdutyResourceApi(uri,
+                                headers,
+                                jsonRoot,
+                                timeoutSeconds=None,
+                                limit=None,
+                                offset=None):
     """
     Calls the PagerDuty API at uri and paginates through all of the results.
     """
@@ -42,7 +55,7 @@ def _invokePagerdutyResourceApi(uri, headers, jsonRoot, timeoutSeconds=None, lim
     queryUri = urlparse.urlunparse(uriParts)
 
     req = urllib2.Request(queryUri)
-    for header,value in headers.iteritems():
+    for header, value in headers.iteritems():
         req.add_header(header, value)
     _addDefaultHeaders(req)
 
@@ -50,7 +63,7 @@ def _invokePagerdutyResourceApi(uri, headers, jsonRoot, timeoutSeconds=None, lim
         f = urllib2.urlopen(req, None, timeoutSeconds)
     except urllib2.URLError as e:
         if hasattr(e, 'code'):
-            if e.code == 401: # Unauthorized
+            if e.code == 401:  # Unauthorized
                 raise InvalidTokenException()
             else:
                 msg = 'The PagerDuty server couldn\'t fulfill the request: HTTP %d (%s)' % (e.code, e.msg)
@@ -93,6 +106,26 @@ def _invokePagerdutyResourceApi(uri, headers, jsonRoot, timeoutSeconds=None, lim
     else:
         return resource
 
+
+def validateAndAddServiceModels(servicesFromResponse):
+    services = []
+    for svcDict in servicesFromResponse:
+        if ('name' in svcDict
+           and 'id' in svcDict
+           and 'type' in svcDict
+           and 'integrations' in svcDict
+           and len(svcDict['integrations']) >= 1):
+            integration = svcDict['integrations'][0]
+            if 'integration_key' in integration:
+                service = Service(name=svcDict['name'],
+                                  id=svcDict['id'],
+                                  serviceKey=integration['integration_key'],
+                                  type=svcDict['type'])
+                services.append(service)
+
+    return services
+
+
 def retrieveServices(account):
     """
     Fetches the list of all services for an Account from the PagerDuty API.
@@ -107,22 +140,5 @@ def retrieveServices(account):
     timeoutSeconds = 10
     allServices = _invokePagerdutyResourceApi(uri, headers, jsonRoot, timeoutSeconds)
 
-    services = []
-    for svcDict in allServices:
-        if ('name' in svcDict and 'id' in svcDict and 'type' in svcDict):
-            integrations = svcDict['integrations']
-            if not integrations:
-                continue
-            apiV2Integrations = [integration for integration in integrations if str(integration['type']) == EVENTS_API2]
-            if not apiV2Integrations:
-                continue
-            else:
-                # we need any integration of new API type
-                apiV2Integration = apiV2Integrations[0]
-            service = Service(name=svcDict['name'],
-                              id=svcDict['id'],
-                              serviceKey=apiV2Integration['integration_key'],
-                              type=svcDict['type'])
-            services.append(service)
-
+    services = validateAndAddServiceModels(allServices)
     return services
