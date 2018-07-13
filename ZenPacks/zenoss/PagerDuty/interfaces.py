@@ -16,8 +16,6 @@ from Products.Zuul.utils import ZuulMessageFactory as _t
 from Products.ZenModel.ZVersion import VERSION as ZENOSS_VERSION
 from Products.ZenUtils.Version import Version
 
-import textwrap
-
 # Make the UI look good in Zenoss 3 and Zenoss 4
 if Version.parse('Zenoss %s' % ZENOSS_VERSION) >= Version.parse('Zenoss 4'):
     SingleLineText = schema.TextLine
@@ -38,37 +36,29 @@ class IPagerDutyEventsAPIActionContentInfo(IInfo):
     info.PagerDutyEventsAPIActionContentInfo.
     """
 
-    service_key = SingleLineText(
+    serviceKey = SingleLineText(
         title       = _t(u'Service API Key'),
         description = _t(u'The API Key for the PagerDuty Service you want to alert.'),
         xtype       = 'pagerduty-api-events-service-list'
     )
 
     summary = SingleLineText(
-        title       = _t(u'Summary'),
+        title       = _t(u'Description'),
         description = _t(u'The summary for the PagerDuty event.'),
         default     = u'${evt/summary}'
     )
 
-    description = SingleLineText(
-        title       = _t(u'Description'),
-        description = _t(u'The description for the PagerDuty event.'),
-        default     = u'${evt/device}: ${evt/summary}',
-    )
-
-    incident_key = SingleLineText(
-        title       = _t(u'Incident Key'),
-        description = _t(u'The incident key for the PagerDuty event.'),
-        default     = u'${evt/evid}',
+    source = SingleLineText(
+        title       = _t(u'Source'),
+        description = _t(u'The unique location of the affected system, preferably a hostname or FQDN'),
+        default     = u'${urls/eventUrl}',
     )
 
     details = schema.List(
         title       = _t(u'Details'),
-        description = _t(u'The incident key for the PagerDuty event.'),
+        description = _t(u'Custom details to be sent.'),
         default     = [json.dumps(_serialize({
                     u'device':u'${evt/device}',
-                    u'ipAddress':u'${evt/component}',
-                    u'severity':u'${evt/severity}',
                     u'message':u'${evt/message}',
                     u'eventID':u'${evt/evid}',
                     }))],
