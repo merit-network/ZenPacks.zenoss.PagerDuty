@@ -8,7 +8,6 @@
 ##############################################################################
 
 import json
-import serialization
 
 from Globals import Persistent
 
@@ -24,4 +23,13 @@ class Account(Persistent):
         return "%s.pagerduty.com" % self.subdomain
 
     def __json__(self):
-        return json.dumps(self, cls=serialization.JSONEncoder)
+        return json.dumps(self, cls=AccountJSONEncoder)
+
+class AccountJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if not isinstance(obj, Account):
+            return super(AccountJSONEncoder, self).default(obj)
+        if obj._p_state == -1:
+            # activate the ghost object manually
+            obj._p_activate()
+        return obj.__dict__

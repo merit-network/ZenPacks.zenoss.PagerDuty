@@ -22,7 +22,7 @@ Usage
 In order for PagerDuty to work with Zenoss an API key should be obtained. In PagerDuty dashboard go to Configuration->API access->Create API Key. If you are presented with an option, choose "v2."  After that create an integration of type "Events API v2" for necessary services.
 
 **2) In Zenoss**
-Go to ADVANCED->Settings->PagerDuty. Enter your PagerDuty subdomain & API key generated before and click "Apply".    
+Go to ADVANCED->Settings->PagerDuty. Enter your PagerDuty subdomain & API key generated before and click "Apply".
 Afer creating the notification of PagerDuty type, the following properties can be edited in notification content tab:
 
 | Title     |Descritpion  |

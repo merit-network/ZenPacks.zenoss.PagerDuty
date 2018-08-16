@@ -7,8 +7,6 @@
 #
 ##############################################################################
 
-from . import enum
-import serialization
 import json
 
 class Service(object):
@@ -23,13 +21,11 @@ class Service(object):
         return "Service(name='%s', id='%s', serviceKey='%s', type='%s')" % (self.name, self.id, self.serviceKey, self.type)
 
     def __json__(self):
-        return json.dumps(self, cls=serialization.JSONEncoder)
+        return json.dumps(self, cls=ServiceJSONEncoder)
 
-    Type = enum(GenericEmail  = 'generic_email',
-                GenericAPI    = 'generic_events_api',
-                CloudKick     = 'Cloudkick',
-                Keynote       = 'Keynote',
-                Nagios        = 'Nagios',
-                Pingdom       = 'Pingdom',
-                ServerDensity = 'Server Density',
-                SQLMonitor    = 'SQL Monitor')
+
+class ServiceJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if not isinstance(obj, Service):
+            return super(ServiceJSONEncoder, self).default(obj)
+        return obj.__dict__
