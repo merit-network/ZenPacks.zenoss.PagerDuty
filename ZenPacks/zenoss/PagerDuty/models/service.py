@@ -7,8 +7,6 @@
 #
 ##############################################################################
 
-import json
-
 class Service(object):
     """A single PagerDuty service"""
     def __init__(self, name, id, serviceKey, type):
@@ -20,12 +18,10 @@ class Service(object):
     def __repr__(self):
         return "Service(name='%s', id='%s', serviceKey='%s', type='%s')" % (self.name, self.id, self.serviceKey, self.type)
 
-    def __json__(self):
-        return json.dumps(self, cls=ServiceJSONEncoder)
-
-
-class ServiceJSONEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if not isinstance(obj, Service):
-            return super(ServiceJSONEncoder, self).default(obj)
-        return obj.__dict__
+    def getDict(self):
+        return {
+            'name': self.name,
+            'id': self.id,
+            'serviceKey': self.serviceKey,
+            'type': self.type
+        }

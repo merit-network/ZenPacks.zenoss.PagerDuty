@@ -7,8 +7,6 @@
 #
 ##############################################################################
 
-import json
-
 from Globals import Persistent
 
 class Account(Persistent):
@@ -22,14 +20,8 @@ class Account(Persistent):
     def fqdn(self):
         return "%s.pagerduty.com" % self.subdomain
 
-    def __json__(self):
-        return json.dumps(self, cls=AccountJSONEncoder)
-
-class AccountJSONEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if not isinstance(obj, Account):
-            return super(AccountJSONEncoder, self).default(obj)
-        if obj._p_state == -1:
-            # activate the ghost object manually
-            obj._p_activate()
-        return obj.__dict__
+    def getDict(self):
+        return {
+            'subdomain': self.subdomain,
+            'apiAccessKey': self.apiAccessKey
+        }
