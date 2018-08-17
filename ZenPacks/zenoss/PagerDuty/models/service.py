@@ -7,10 +7,6 @@
 #
 ##############################################################################
 
-from . import enum
-import serialization
-import json
-
 class Service(object):
     """A single PagerDuty service"""
     def __init__(self, name, id, serviceKey, type):
@@ -22,14 +18,10 @@ class Service(object):
     def __repr__(self):
         return "Service(name='%s', id='%s', serviceKey='%s', type='%s')" % (self.name, self.id, self.serviceKey, self.type)
 
-    def __json__(self):
-        return json.dumps(self, cls=serialization.JSONEncoder)
-
-    Type = enum(GenericEmail  = 'generic_email',
-                GenericAPI    = 'generic_events_api',
-                CloudKick     = 'Cloudkick',
-                Keynote       = 'Keynote',
-                Nagios        = 'Nagios',
-                Pingdom       = 'Pingdom',
-                ServerDensity = 'Server Density',
-                SQLMonitor    = 'SQL Monitor')
+    def getDict(self):
+        return {
+            'name': self.name,
+            'id': self.id,
+            'serviceKey': self.serviceKey,
+            'type': self.type
+        }
