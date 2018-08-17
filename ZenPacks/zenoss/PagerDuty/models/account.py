@@ -7,9 +7,6 @@
 #
 ##############################################################################
 
-import json
-import serialization
-
 from Globals import Persistent
 
 class Account(Persistent):
@@ -23,5 +20,8 @@ class Account(Persistent):
     def fqdn(self):
         return "%s.pagerduty.com" % self.subdomain
 
-    def __json__(self):
-        return json.dumps(self, cls=serialization.JSONEncoder)
+    def getDict(self):
+        return {
+            'subdomain': self.subdomain,
+            'apiAccessKey': self.apiAccessKey
+        }

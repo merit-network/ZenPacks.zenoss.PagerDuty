@@ -9,11 +9,10 @@
 
 import requests
 import models.account
-import models.serialization
+import models.service
 
 from Products.ZenUtils.Ext import DirectRouter, DirectResponse
 
-import json
 import logging
 log = logging.getLogger('zen.PagerDuty.ServicesRouter')
 
@@ -21,10 +20,6 @@ ACCOUNT_ATTR = 'pagerduty_account'
 
 def _dmdRoot(dmdContext):
     return dmdContext.getObjByPath("/zport/dmd/")
-
-def _success(modelObj, msg=None):
-    objData = json.loads(json.dumps(modelObj, cls=models.serialization.JSONEncoder))
-    return DirectResponse.succeed(msg=msg, data=objData)
 
 def _retrieveServices(account):
     log.info("Fetching list of PagerDuty services for %s..." % account.fqdn())
@@ -54,7 +49,7 @@ class AccountRouter(DirectRouter):
         """
         dmdRoot = _dmdRoot(self.context)
         account = getattr(dmdRoot, ACCOUNT_ATTR, models.account.Account(None, None))
-        return _success(account)
+        return DirectResponse.succeed(msg=None, data=account.getDict())
 
     def updateAccountSettings(self, apiAccessKey=None, subdomain=None, wantsMessages=True):
         """
@@ -109,5 +104,6 @@ class ServicesRouter(DirectRouter):
         if not apiServices:
             msg = ("No services with events integration v2 were found for %s.pagerduty.com." % account.subdomain) if wantsMessages else None
             return DirectResponse.fail(msg=msg)
-        
-        return _success(apiServices)
+
+        data = [service.getDict() for service in apiServices]
+        return DirectResponse.succeed(msg=None, data=data)
