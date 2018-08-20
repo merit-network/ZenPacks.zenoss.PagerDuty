@@ -13,7 +13,7 @@ import urlparse
 import urllib2
 
 from types import DictType, ListType
-from models.service import Service
+from .models.service import Service
 
 
 class InvalidTokenException(Exception):
@@ -115,7 +115,15 @@ def validateAndAddServiceModels(servicesFromResponse):
            and 'type' in svcDict
            and 'integrations' in svcDict
            and len(svcDict['integrations']) >= 1):
-            integration = svcDict['integrations'][0]
+            # Prefer the API v2 if available
+            v2_integrations = [
+                i for i in svcDict['integrations'] \
+                if i.get('type') == 'events_api_v2_inbound_integration'
+            ]
+            if v2_integrations:
+                integration = v2_integrations[0]
+            else:
+                integration = svcDict['integrations'][0]
             if 'integration_key' in integration:
                 service = Service(name=svcDict['name'],
                                   id=svcDict['id'],
