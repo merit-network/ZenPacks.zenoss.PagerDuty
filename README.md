@@ -34,5 +34,23 @@ Afer creating the notification of PagerDuty type, the following properties can b
 | Incident Key | The incident key for the PagerDuty event. |
 
 
+Changes
+-------
 
+Release 2.0.2
 
+- Fixes
+
+  * Prefer the v2 integration if v1 integration is also defined on the service.
+
+Release 2.0.1
+
+- Fixes
+
+  * API Details disappearing from UI
+
+Release 2.0.0
+
+- Features
+
+  * Switch to PagerDuty API v2
