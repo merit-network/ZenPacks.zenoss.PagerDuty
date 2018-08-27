@@ -39,7 +39,7 @@ then the prior ZenPack needs to be completely removed prior to installation.
 This includes all existing PagerDuty Notifications. The following steps are
 recommended based on user testing.
 
-* Pre Mainteinance
+* Pre Maintenance
 
   * Create a new v2 API Key on the PagerDuty site and store for later
     (https://support.pagerduty.com/v1/docs/using-the-api#section-generating-an-api-key)
