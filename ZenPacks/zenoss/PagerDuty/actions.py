@@ -143,7 +143,9 @@ class PagerDutyEventsAPIAction(IActionBase):
         headers = {'Content-Type': 'application/json'}
         req = urllib2.Request(EVENT_API_URI, requestBody, headers)
         try:
-            f = urllib2.urlopen(req, None, API_TIMEOUT_SECONDS)
+            # bypass default handler SVC-1819
+            opener = urllib2.build_opener()
+            f = opener.open(req, None, API_TIMEOUT_SECONDS)
         except urllib2.URLError as e:
             if hasattr(e, 'reason'):
                 msg = 'Failed to contact the PagerDuty server: %s' % (e.reason)

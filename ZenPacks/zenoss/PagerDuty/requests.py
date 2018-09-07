@@ -60,7 +60,9 @@ def _invokePagerdutyResourceApi(uri,
     _addDefaultHeaders(req)
 
     try:
-        f = urllib2.urlopen(req, None, timeoutSeconds)
+        # bypass default handler SVC-1819
+        opener = urllib2.build_opener()
+        f = opener.open(req, None, timeoutSeconds)
     except urllib2.URLError as e:
         if hasattr(e, 'code'):
             if e.code == 401:  # Unauthorized
