@@ -52,13 +52,13 @@ recommended based on user testing.
   * Remove any PagerDuty Notifications (note the settings for adding them back)
   * Uninstall the prior ZenPack (e.g., `serviced service run zope
     zenpack-manager uninstall ZenPacks.PagerDuty.APINotification`)
-  * Stop and restart all Zenoss Services, including zproxy (Infrastructure can stay up)
+  * Stop and restart all Zenoss Services, including **zproxy** (Infrastructure can stay up)
 
 * Install
 
   * Install the new ZenPack (e.g., `serviced service run zope zenpack-manager
     install ZenPacks.zenoss.PagerDuty-2.0.2-py2.7.egg`)
-  * Stop and restart all Zenoss Services, including zproxy (Infrastructure can stay up)
+  * Stop and restart all Zenoss Services, including **zproxy** (Infrastructure can stay up)
 
 * Configure
 
@@ -71,9 +71,9 @@ recommended based on user testing.
     most current files are used.
   * If you're unable to save the new API Access Key and the textboxes seem
     small or you are seeing an infinite loading on the Notification window,
-    stop all Zenoss services including Infrastructure services and start them
-    back up. If this does not resolve the issue, you may need to roll back or
-    retry the install.
+    these are signs of the JavaScript files being cached. Stop all Zenoss
+    services, including **zproxy** and Infrastructure services and start them
+    back up.
 
 
 Usage
@@ -114,6 +114,12 @@ Usage
 
 Changes
 -------
+
+Release 2.0.3
+
+- Fixes
+
+  * Workaround for SSLv3 Handshake issues caused by conflict from CiscoMonitor
 
 Release 2.0.2
 
