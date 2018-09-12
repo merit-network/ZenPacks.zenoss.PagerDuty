@@ -61,9 +61,6 @@ class PagerDutyEventsAPIAction(IActionBase):
         """
         Sets up the execution environment and POSTs to PagerDuty's Event API.
         """
-        log.debug('Executing Pagerduty Events API action: %s', self.name)
-
-        self.setupAction(notification.dmd)
 
         if signal.clear:
             eventType = EventType.RESOLVE
@@ -71,6 +68,10 @@ class PagerDutyEventsAPIAction(IActionBase):
             eventType = EventType.ACKNOWLEDGE
         else:
             eventType = EventType.TRIGGER
+
+        log.debug('Executing Pagerduty Events API Action: %s', eventType)
+
+        self.setupAction(notification.dmd)
 
         # Set up the TALES environment
         environ = {'dmd':notification.dmd, 'env':None}
@@ -118,6 +119,8 @@ class PagerDutyEventsAPIAction(IActionBase):
                 payload.update({prop: notification.content[prop]})
             else:
                 raise ActionExecutionException("Required property '%s' not found" % prop)
+
+        log.debug('Pagerduty Request Body: %r', body)  # Log before adding API Key
 
         if NotificationProperties.SERVICE_KEY in notification.content:
             body.update({'routing_key': notification.content['serviceKey']})
