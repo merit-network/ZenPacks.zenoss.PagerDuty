@@ -69,7 +69,7 @@ class PagerDutyEventsAPIAction(IActionBase):
         else:
             eventType = EventType.TRIGGER
 
-        log.debug('Executing Pagerduty Events API action: %s Action: %s', self.name, eventType)
+        log.debug('Executing Pagerduty Events API Action: %s', eventType)
 
         self.setupAction(notification.dmd)
 
