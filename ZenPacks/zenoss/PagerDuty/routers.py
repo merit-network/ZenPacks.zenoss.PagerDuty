@@ -51,7 +51,7 @@ class AccountRouter(DirectRouter):
         account = getattr(dmdRoot, ACCOUNT_ATTR, models.account.Account(None, None))
         return DirectResponse.succeed(msg=None, data=account.getDict())
 
-    def updateAccountSettings(self, apiAccessKey=None, subdomain=None, wantsMessages=True):
+    def updateAccountSettings(self, apiAccessKey=None, subdomain=None, apiTimeout=None, wantsMessages=True):
         """
         Saves the account object and returns a list of services associated
         with that account.  Returns nothing if invalid account info is set.
@@ -59,12 +59,16 @@ class AccountRouter(DirectRouter):
         The account object is saved as /zport/dmd/pagerduty_account
         (aka, dmdRoot.pagerduty_account)
         """
-        account = models.account.Account(subdomain, apiAccessKey)
+        if not apiAccessKey or not subdomain:
+            return DirectResponse.fail(msg="Api Access Key and subdomain are needed for PagerDuty account")
+
+        if not apiTimeout:
+            account = models.account.Account(subdomain, apiAccessKey)
+        else:
+            account = models.account.Account(subdomain, apiAccessKey, int(apiTimeout))
+
         dmdRoot = _dmdRoot(self.context)
         setattr(dmdRoot, ACCOUNT_ATTR, account)
-
-        if not account.apiAccessKey or not account.subdomain:
-            return DirectResponse.succeed()
 
         servicesRouter = ServicesRouter(self.context, self.request)
         result = servicesRouter.getServices(wantsMessages)

@@ -22,6 +22,7 @@ from Products.ZenModel.actions import IActionBase, ActionExecutionException
 from Products.ZenModel.actions import processTalSource, _signalToContextDict
 from Products.ZenModel.ZVersion import VERSION as ZENOSS_VERSION
 
+from ZenPacks.zenoss.PagerDuty.routers import ACCOUNT_ATTR, _dmdRoot
 from ZenPacks.zenoss.PagerDuty.interfaces import IPagerDutyEventsAPIActionContentInfo
 from ZenPacks.zenoss.PagerDuty.constants import EVENT_API_URI, EventType, enum
 from ZenPacks.zenoss.PagerDuty import version as zenpack_version
@@ -33,8 +34,6 @@ REQUIRED_PROPERTIES = [NotificationProperties.SUMMARY, NotificationProperties.SO
 
 EVENT_MAPPING = {'0': 'info', '1': 'info', '2': 'info',
                  '3': 'warning', '4': 'error', '5': 'critical'}
-
-API_TIMEOUT_SECONDS = 40
 
 
 class PagerDutyEventsAPIAction(IActionBase):
@@ -139,6 +138,8 @@ class PagerDutyEventsAPIAction(IActionBase):
             PagerDuty's Event API (e.g., API down, invalid service key).
         """
 
+        dmdRoot = _dmdRoot(self.dmd)
+        apiTimeout = getattr(dmdRoot, ACCOUNT_ATTR).apiTimeout
         bodyWithProcessedTalesExpressions = self._processTalExpressions(body, environ)
         bodyWithProcessedTalesExpressions['payload']['severity'] = EVENT_MAPPING[bodyWithProcessedTalesExpressions['payload']['severity']]
         requestBody = json.dumps(bodyWithProcessedTalesExpressions)
@@ -148,7 +149,7 @@ class PagerDutyEventsAPIAction(IActionBase):
         try:
             # bypass default handler SVC-1819
             opener = urllib2.build_opener()
-            f = opener.open(req, None, API_TIMEOUT_SECONDS)
+            f = opener.open(req, None, apiTimeout)
         except urllib2.URLError as e:
             if hasattr(e, 'reason'):
                 msg = 'Failed to contact the PagerDuty server: %s' % (e.reason)
