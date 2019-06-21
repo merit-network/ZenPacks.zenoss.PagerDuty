@@ -64,7 +64,7 @@ class AccountRouter(DirectRouter):
 
         if not apiTimeout:
             account = models.account.Account(subdomain, apiAccessKey)
-            log.info("A zero value results in a default timeout of 40 seconds")
+            log.info("The API Timeout zero value results in a default timeout of 40 seconds")
         else:
             account = models.account.Account(subdomain, apiAccessKey, int(apiTimeout))
 
