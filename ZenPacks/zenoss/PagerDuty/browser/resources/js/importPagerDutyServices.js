@@ -33,6 +33,13 @@
                     xtype: 'textfield'
                 },
                 {
+                    fieldLabel: 'API Timeout(seconds)',
+                    labelWidth: 150,
+                    name: 'apiTimeout',
+                    width: 400,
+                    xtype: 'numberfield'
+                },
+                {
                     xtype: 'button',
                     text: 'Apply',
                     style: {
@@ -71,7 +78,7 @@
 
                     this.getForm().setValues(result.data);
 
-                    if (result.data.apiAccessKey && result.data.subdomain) {
+                    if (result.data.apiAccessKey && result.data.subdomain  && result.data.apiTimeout) {
                         servicesRouter.getServices({wantsMessages: true}, function(result) {
                             var pdServiceStore = Ext.data.StoreManager.lookup('pdServiceStore');
                             pdServiceStore.loadData((result.success && result.data) ? result.data : []);
