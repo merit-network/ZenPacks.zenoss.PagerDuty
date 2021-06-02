@@ -7,7 +7,10 @@
 #
 ##############################################################################
 import json
+from http import HTTPStatus
 import urllib2
+from requests import PagerDutyRequestLimitExceeded
+from retry import retry
 
 import logging
 log = logging.getLogger("zen.pagerduty.actions")
@@ -129,6 +132,7 @@ class PagerDutyEventsAPIAction(IActionBase):
 
         self._performRequest(body, environ)
 
+    @retry(exceptions=PagerDutyRequestLimitExceeded, delay=60, jitter=(1, 5))
     def _performRequest(self, body, environ):
         """
         Actually performs the request to PagerDuty's Event API.
@@ -156,7 +160,11 @@ class PagerDutyEventsAPIAction(IActionBase):
                 raise ActionExecutionException(msg)
             elif hasattr(e, 'code'):
                 msg = 'The PagerDuty server couldn\'t fulfill the request: HTTP %d (%s)' % (e.code, e.msg)
-                raise ActionExecutionException(msg)
+
+                if e.code == HTTPStatus.TOO_MANY_REQUESTS:
+                    raise PagerDutyRequestLimitExceeded(msg)
+                else:
+                    raise ActionExecutionException(msg)
             else:
                 raise ActionExecutionException('Unknown URLError occurred')
 

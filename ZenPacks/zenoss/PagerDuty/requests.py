@@ -23,6 +23,8 @@ class InvalidTokenException(Exception):
 class PagerDutyUnreachableException(Exception):
     pass
 
+class PagerDutyRequestLimitExceeded(Exception):
+    pass
 
 class ParseException(Exception):
     pass
