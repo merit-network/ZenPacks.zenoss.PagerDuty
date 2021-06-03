@@ -7,7 +7,6 @@
 #
 ##############################################################################
 import json
-from http import HTTPStatus
 import urllib2
 from requests import PagerDutyRequestLimitExceeded
 from retry import retry
@@ -161,7 +160,7 @@ class PagerDutyEventsAPIAction(IActionBase):
             elif hasattr(e, 'code'):
                 msg = 'The PagerDuty server couldn\'t fulfill the request: HTTP %d (%s)' % (e.code, e.msg)
 
-                if e.code == HTTPStatus.TOO_MANY_REQUESTS:
+                if e.code == 429:
                     raise PagerDutyRequestLimitExceeded(msg)
                 else:
                     raise ActionExecutionException(msg)
