@@ -144,7 +144,16 @@ class PagerDutyEventsAPIAction(IActionBase):
         dmdRoot = _dmdRoot(self.dmd)
         apiTimeout = getattr(dmdRoot, ACCOUNT_ATTR).apiTimeout
         bodyWithProcessedTalesExpressions = self._processTalExpressions(body, environ)
-        bodyWithProcessedTalesExpressions['payload']['severity'] = EVENT_MAPPING[bodyWithProcessedTalesExpressions['payload']['severity']]
+
+        try:
+            bodyWithProcessedTalesExpressions['payload']['severity'] = EVENT_MAPPING[bodyWithProcessedTalesExpressions['payload']['severity']]
+        except KeyError:
+            severity = bodyWithProcessedTalesExpressions['payload']['severity']
+            if severity in EVENT_MAPPING.values():
+                bodyWithProcessedTalesExpressions['payload']['severity'] = severity
+        except Exception:
+            raise
+
         requestBody = json.dumps(bodyWithProcessedTalesExpressions)
 
         headers = {'Content-Type': 'application/json'}
