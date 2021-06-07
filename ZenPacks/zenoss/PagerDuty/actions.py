@@ -148,9 +148,10 @@ class PagerDutyEventsAPIAction(IActionBase):
         try:
             bodyWithProcessedTalesExpressions['payload']['severity'] = EVENT_MAPPING[bodyWithProcessedTalesExpressions['payload']['severity']]
         except KeyError:
-            severity = bodyWithProcessedTalesExpressions['payload']['severity']
-            if severity in EVENT_MAPPING.values():
-                bodyWithProcessedTalesExpressions['payload']['severity'] = severity
+            if bodyWithProcessedTalesExpressions['payload']['severity'] in EVENT_MAPPING.values():
+                pass
+            else:
+                raise
         except Exception:
             raise
 
