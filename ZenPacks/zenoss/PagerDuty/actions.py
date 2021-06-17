@@ -8,6 +8,8 @@
 ##############################################################################
 import json
 import urllib2
+from requests import PagerDutyRequestLimitExceeded
+from retry import retry
 
 import logging
 log = logging.getLogger("zen.pagerduty.actions")
@@ -129,6 +131,7 @@ class PagerDutyEventsAPIAction(IActionBase):
 
         self._performRequest(body, environ)
 
+    @retry(exceptions=PagerDutyRequestLimitExceeded, delay=60, jitter=(1, 5))
     def _performRequest(self, body, environ):
         """
         Actually performs the request to PagerDuty's Event API.
@@ -141,7 +144,17 @@ class PagerDutyEventsAPIAction(IActionBase):
         dmdRoot = _dmdRoot(self.dmd)
         apiTimeout = getattr(dmdRoot, ACCOUNT_ATTR).apiTimeout
         bodyWithProcessedTalesExpressions = self._processTalExpressions(body, environ)
-        bodyWithProcessedTalesExpressions['payload']['severity'] = EVENT_MAPPING[bodyWithProcessedTalesExpressions['payload']['severity']]
+
+        try:
+            bodyWithProcessedTalesExpressions['payload']['severity'] = EVENT_MAPPING[bodyWithProcessedTalesExpressions['payload']['severity']]
+        except KeyError:
+            if bodyWithProcessedTalesExpressions['payload']['severity'] in EVENT_MAPPING.values():
+                pass
+            else:
+                raise
+        except Exception:
+            raise
+
         requestBody = json.dumps(bodyWithProcessedTalesExpressions)
 
         headers = {'Content-Type': 'application/json'}
@@ -156,7 +169,11 @@ class PagerDutyEventsAPIAction(IActionBase):
                 raise ActionExecutionException(msg)
             elif hasattr(e, 'code'):
                 msg = 'The PagerDuty server couldn\'t fulfill the request: HTTP %d (%s)' % (e.code, e.msg)
-                raise ActionExecutionException(msg)
+
+                if e.code == 429:
+                    raise PagerDutyRequestLimitExceeded(msg)
+                else:
+                    raise ActionExecutionException(msg)
             else:
                 raise ActionExecutionException('Unknown URLError occurred')
 

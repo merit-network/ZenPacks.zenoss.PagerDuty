@@ -8,7 +8,7 @@ AUTHOR = "Zenoss"
 LICENSE = ""
 NAMESPACE_PACKAGES = ['ZenPacks', 'ZenPacks.zenoss']
 PACKAGES = ['ZenPacks', 'ZenPacks.zenoss', 'ZenPacks.zenoss.PagerDuty']
-INSTALL_REQUIRES = []
+INSTALL_REQUIRES = ['retry']
 COMPAT_ZENOSS_VERS = ">= 4.2.5"
 PREV_ZENPACK_NAME = "ZenPacks.PagerDuty.APINotification"
 # STOP_REPLACEMENTS
